@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Papan skor kartu remi 4 pemain dengan aturan bom otomatis. Cepat dipakai di meja, tersimpan di perangkat.">
+  <meta name="theme-color" content="#f2ece0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="application-name" content="Remi RT">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Remi RT">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Remi RT — Papan Skor</title>
+
+  <script>
+    // Terapkan tema sebelum render pertama supaya tidak ada kedip tema.
+    (function () {
+      try {
+        var theme = "system";
+        var raw = localStorage.getItem("papan-skor-remi-rt:v1");
+        if (raw) {
+          var data = JSON.parse(raw);
+          if (data && data.settings && typeof data.settings.theme === "string") {
+            theme = data.settings.theme;
+          }
+        }
+        var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        var resolved = theme === "dark" || (theme === "system" && dark) ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", resolved);
+        document.documentElement.style.colorScheme = resolved;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", resolved === "dark" ? "#0b1311" : "#f2ece0");
+      } catch (error) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body>
+  <a class="skip-link" href="#scoreBoard">Langsung ke papan skor</a>
+
+  <svg class="svg-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-undo" viewBox="0 0 24 24">
+      <path d="M9.5 7 4.5 12l5 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M5 12h8.25A5.75 5.75 0 0 1 19 17.75V19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24">
+      <circle cx="5" cy="12" r="1.8" fill="currentColor"/>
+      <circle cx="12" cy="12" r="1.8" fill="currentColor"/>
+      <circle cx="19" cy="12" r="1.8" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24">
+      <path d="m14.9 5.4 3.7 3.7M5 19l1-4.4L16.7 3.9a1.6 1.6 0 0 1 2.3 0l1.1 1.1a1.6 1.6 0 0 1 0 2.3L9.4 18 5 19Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-close" viewBox="0 0 24 24">
+      <path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-keyboard" viewBox="0 0 24 24">
+      <rect x="2.7" y="6" width="18.6" height="12" rx="2.3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M6.5 9.5h.01M10 9.5h.01M13.5 9.5h.01M17 9.5h.01M6.5 12.7h.01M10 12.7h.01M13.5 12.7h.01M17 12.7h.01M8 15.4h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24">
+      <rect x="8" y="8" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M16 8V6.8A1.8 1.8 0 0 0 14.2 5H6.8A1.8 1.8 0 0 0 5 6.8v7.4A1.8 1.8 0 0 0 6.8 16H8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24">
+      <path d="M4.5 7h15M9.3 4.5h5.4M7 7l.8 12.1a1.4 1.4 0 0 0 1.4 1.4h5.6a1.4 1.4 0 0 0 1.4-1.4L17 7M10 10.5v6M14 10.5v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-download" viewBox="0 0 24 24">
+      <path d="M12 3.5v11m0 0 4-4m-4 4-4-4M4.5 16.5V19a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5v-2.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24">
+      <path d="M12 20V9m0 0 4 4M12 9l-4 4M4.5 7.5V5A1.5 1.5 0 0 1 6 3.5h12A1.5 1.5 0 0 1 19.5 5v2.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24">
+      <rect x="3.5" y="5.5" width="17" height="15" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+      <path d="M7.5 3v5M16.5 3v5M3.5 9.5h17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-bomb" viewBox="0 0 24 24">
+      <circle cx="10.6" cy="13.8" r="6.4" fill="currentColor"/>
+      <path d="M15.2 9.2 18 6.4m0 0 2.4.3-.2 2.3M18 6.4l.7-2.1M8.4 11.7c.7-.8 1.6-1.3 2.7-1.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M19.4 3.2c1.2.1 1.7.7 1.8 1.9" fill="none" stroke="#F2A93B" stroke-width="1.8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-crown" viewBox="0 0 24 24">
+      <path d="M3.5 8.2 7.7 12 12 5l4.3 7 4.2-3.8-1.5 9.3H5L3.5 8.2Z" fill="currentColor"/>
+      <path d="M5.6 20h12.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-play" viewBox="0 0 24 24">
+      <path d="M8.5 5.7v12.6L18.7 12 8.5 5.7Z" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-history" viewBox="0 0 24 24">
+      <path d="M4.4 10.5A8 8 0 1 1 6 16.4M4.4 10.5V5.8m0 4.7h4.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12 7.8v4.7l3 1.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="3.1" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M19.4 13.3a7.8 7.8 0 0 0 0-2.6l2-1.5-2-3.4-2.4 1a7.8 7.8 0 0 0-2.2-1.3L14.5 3h-5l-.3 2.5A7.8 7.8 0 0 0 7 6.8l-2.4-1-2 3.4 2 1.5a7.8 7.8 0 0 0 0 2.6l-2 1.5 2 3.4 2.4-1a7.8 7.8 0 0 0 2.2 1.3l.3 2.5h5l.3-2.5a7.8 7.8 0 0 0 2.2-1.3l2.4 1 2-3.4-2-1.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+    </symbol>
+  </svg>
+
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <span class="brand-suit">♠</span>
+          <span class="brand-mini">RT</span>
+        </div>
+        <div class="brand-copy">
+          <span class="eyebrow">Papan skor remi RT</span>
+          <h1 class="game-heading">
+            <button class="game-title-button" id="gameTitleButton" type="button" title="Ketuk untuk mengganti nama game">
+              <span id="gameTitleText">Main Malam Ini</span>
+              <svg class="icon title-pen" aria-hidden="true"><use href="#i-pencil"></use></svg>
+            </button>
+          </h1>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="undo-button" id="undoButton" type="button" title="Batalkan langkah terakhir (Ctrl+Z)" aria-label="Batalkan langkah terakhir" disabled>
+          <svg class="icon" aria-hidden="true"><use href="#i-undo"></use></svg>
+          <span class="undo-label">Undo</span>
+        </button>
+        <div class="menu-wrap">
+          <button class="icon-button" id="menuButton" type="button" aria-label="Buka menu" aria-expanded="false" aria-controls="appMenu">
+            <svg class="icon" aria-hidden="true"><use href="#i-menu"></use></svg>
+          </button>
+          <nav class="app-menu" id="appMenu" aria-label="Menu utama" hidden>
+            <button class="menu-item" type="button" data-menu-action="new-game">
+              <span class="menu-icon menu-icon-accent">＋</span>
+              <span><strong>Game baru</strong><small>Mulai meja baru</small></span>
+            </button>
+            <button class="menu-item" type="button" data-menu-action="history">
+              <svg class="icon menu-icon" aria-hidden="true"><use href="#i-history"></use></svg>
+              <span><strong>Riwayat game</strong><small>Buka atau kelola game</small></span>
+            </button>
+            <button class="menu-item" type="button" data-menu-action="settings">
+              <svg class="icon menu-icon" aria-hidden="true"><use href="#i-settings"></use></svg>
+              <span><strong>Pengaturan</strong><small>Tema, suara, cadangan</small></span>
+            </button>
+            <div class="menu-separator" role="separator"></div>
+            <button class="menu-item menu-item-compact" type="button" data-menu-action="export">
+              <svg class="icon menu-icon" aria-hidden="true"><use href="#i-download"></use></svg>
+              <span><strong>Ekspor cadangan</strong></span>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <div class="storage-banner" id="storageBanner" role="alert" hidden></div>
+
+    <main class="main">
+      <div class="game-strip">
+        <span class="game-date" id="gameDate">
+          <svg class="icon" aria-hidden="true"><use href="#i-calendar"></use></svg>
+          <span id="gameDateText">—</span>
+        </span>
+        <span class="game-stats" id="gameStats">4 pemain · 0 entri · 0 bom</span>
+        <span class="threshold-pill" title="Pemain dengan total di atas ambang bisa meledak jika tersalip">
+          <svg class="icon" aria-hidden="true"><use href="#i-bomb"></use></svg>
+          Bom di atas <strong id="thresholdValue">100</strong>
+        </span>
+      </div>
+
+      <section class="table-shell" aria-label="Meja skor">
+        <div class="board" id="scoreBoard" role="group" aria-label="Papan skor empat pemain">
+          <noscript>
+            <p class="noscript">Aplikasi ini membutuhkan JavaScript untuk menghitung skor.</p>
+          </noscript>
+        </div>
+      </section>
+    </main>
+
+    <aside class="mobile-dock" aria-label="Input skor cepat">
+      <div class="dock-inner">
+        <div class="dock-players" id="dockPlayers" role="group" aria-label="Pilih pemain untuk diberi nilai"></div>
+        <div class="dock-actions" role="group" aria-label="Tombol nilai untuk pemain yang dipilih">
+          <button class="dock-score dock-add" type="button" data-dock-action="score" data-amount="5" aria-label="Tambah 5"><span>+</span>5</button>
+          <button class="dock-score dock-add" type="button" data-dock-action="score" data-amount="10" aria-label="Tambah 10"><span>+</span>10</button>
+          <button class="dock-score dock-add" type="button" data-dock-action="score" data-amount="50" aria-label="Tambah 50"><span>+</span>50</button>
+          <button class="dock-score dock-sub" type="button" data-dock-action="score" data-amount="-5" aria-label="Kurang 5"><span>−</span>5</button>
+          <button class="dock-score dock-sub" type="button" data-dock-action="score" data-amount="-10" aria-label="Kurang 10"><span>−</span>10</button>
+          <button class="dock-score dock-sub" type="button" data-dock-action="score" data-amount="-50" aria-label="Kurang 50"><span>−</span>50</button>
+          <button class="dock-keypad" type="button" data-dock-action="manual" aria-label="Masukkan nilai lain">
+            <svg class="icon" aria-hidden="true"><use href="#i-keyboard"></use></svg>
+            <span>Nilai</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  <div class="sr-only" id="scoreAnnouncer" aria-live="polite" aria-atomic="true"></div>
+  <div class="sr-only" id="bombAnnouncer" role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+  <dialog class="dialog dialog-sheet" id="newGameDialog" aria-labelledby="newGameTitle">
+    <form class="dialog-panel" id="newGameForm" novalidate>
+      <header class="dialog-head">
+        <div>
+          <p class="eyebrow">Meja baru</p>
+          <h2 id="newGameTitle">Game baru</h2>
+        </div>
+        <button class="icon-button dialog-close" type="button" data-close-dialog aria-label="Tutup dialog">
+          <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+        </button>
+      </header>
+      <div class="dialog-body">
+        <label class="field">
+          <span class="field-label">Nama game <span class="field-optional">(opsional)</span></span>
+          <input class="text-input" id="newGameName" name="gameName" type="text" maxlength="48" autocomplete="off" placeholder="Contoh: Main malam Jumat">
+        </label>
+
+        <fieldset class="player-fields">
+          <legend>Nama 4 pemain</legend>
+          <div class="player-input-grid">
+            <label class="player-input">
+              <span class="player-input-swatch" style="--pc: #C9573B" aria-hidden="true">♠</span>
+              <span class="sr-only">Pemain 1</span>
+              <input class="text-input" name="playerName" type="text" maxlength="24" autocomplete="off" placeholder="Pemain 1" data-player-index="0">
+            </label>
+            <label class="player-input">
+              <span class="player-input-swatch" style="--pc: #B78326" aria-hidden="true">♥</span>
+              <span class="sr-only">Pemain 2</span>
+              <input class="text-input" name="playerName" type="text" maxlength="24" autocomplete="off" placeholder="Pemain 2" data-player-index="1">
+            </label>
+            <label class="player-input">
+              <span class="player-input-swatch" style="--pc: #2F7D72" aria-hidden="true">♦</span>
+              <span class="sr-only">Pemain 3</span>
+              <input class="text-input" name="playerName" type="text" maxlength="24" autocomplete="off" placeholder="Pemain 3" data-player-index="2">
+            </label>
+            <label class="player-input">
+              <span class="player-input-swatch" style="--pc: #5973B8" aria-hidden="true">♣</span>
+              <span class="sr-only">Pemain 4</span>
+              <input class="text-input" name="playerName" type="text" maxlength="24" autocomplete="off" placeholder="Pemain 4" data-player-index="3">
+            </label>
+          </div>
+        </fieldset>
+        <p class="field-note">Warna dan simbol dibagi otomatis. Nama pemain bisa diubah kapan saja di meja.</p>
+      </div>
+      <footer class="dialog-actions">
+        <button class="button button-ghost" type="button" data-close-dialog>Batal</button>
+        <button class="button button-primary" type="submit">Mulai game</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog class="dialog dialog-wide" id="historyDialog" aria-labelledby="historyTitle">
+    <div class="dialog-panel">
+      <header class="dialog-head">
+        <div>
+          <p class="eyebrow">Arsip meja</p>
+          <h2 id="historyTitle">Riwayat game</h2>
+        </div>
+        <button class="icon-button dialog-close" type="button" data-close-dialog aria-label="Tutup riwayat">
+          <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+        </button>
+      </header>
+      <div class="dialog-body history-body">
+        <div class="history-list" id="historyList"></div>
+      </div>
+      <footer class="dialog-foot-note">Semua game tersimpan hanya di perangkat ini.</footer>
+    </div>
+  </dialog>
+
+  <dialog class="dialog dialog-sheet" id="settingsDialog" aria-labelledby="settingsTitle">
+    <div class="dialog-panel">
+      <header class="dialog-head">
+        <div>
+          <p class="eyebrow">Preferensi meja</p>
+          <h2 id="settingsTitle">Pengaturan</h2>
+        </div>
+        <button class="icon-button dialog-close" type="button" data-close-dialog aria-label="Tutup pengaturan">
+          <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+        </button>
+      </header>
+      <div class="dialog-body settings-body">
+        <section class="settings-section">
+          <div class="settings-heading">
+            <h3>Tema tampilan</h3>
+            <p>Pilih yang nyaman dilihat di meja.</p>
+          </div>
+          <div class="segmented" id="themeControl" role="radiogroup" aria-label="Tema tampilan">
+            <label>
+              <input type="radio" name="theme" value="system">
+              <span>Ikuti sistem</span>
+            </label>
+            <label>
+              <input type="radio" name="theme" value="light">
+              <span>Terang</span>
+            </label>
+            <label>
+              <input type="radio" name="theme" value="dark">
+              <span>Gelap</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <label class="setting-row" for="soundToggle">
+            <span>
+              <strong>Suara ledakan</strong>
+              <small>Bunyi bom saat animasi berjalan.</small>
+            </span>
+            <span class="switch">
+              <input id="soundToggle" type="checkbox">
+              <span class="switch-track" aria-hidden="true"></span>
+            </span>
+          </label>
+        </section>
+
+        <section class="settings-section">
+          <div class="settings-heading">
+            <h3>Cadangan data</h3>
+            <p>Simpan semua game ke file JSON, atau pulihkan dari cadangan.</p>
+          </div>
+          <div class="settings-actions">
+            <button class="button button-secondary" type="button" id="exportButton">
+              <svg class="icon" aria-hidden="true"><use href="#i-download"></use></svg>
+              Ekspor JSON
+            </button>
+            <button class="button button-secondary" type="button" id="importButton">
+              <svg class="icon" aria-hidden="true"><use href="#i-upload"></use></svg>
+              Impor JSON
+            </button>
+            <input type="file" id="importFile" accept="application/json,.json" hidden>
+          </div>
+          <p class="settings-message" id="settingsMessage" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="settings-section storage-details" id="storageDetails">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>Tersimpan otomatis di perangkat ini.</span>
+        </section>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="dialog dialog-sheet" id="renameDialog" aria-labelledby="renameTitle">
+    <form class="dialog-panel" id="renameForm" novalidate>
+      <header class="dialog-head">
+        <div>
+          <p class="eyebrow" id="renameEyebrow">Ubah nama</p>
+          <h2 id="renameTitle">Ubah nama</h2>
+        </div>
+        <button class="icon-button dialog-close" type="button" data-close-dialog aria-label="Tutup dialog">
+          <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+        </button>
+      </header>
+      <div class="dialog-body">
+        <label class="field">
+          <span class="field-label" id="renameLabel">Nama</span>
+          <input class="text-input" id="renameInput" name="name" type="text" maxlength="48" autocomplete="off" required>
+        </label>
+        <p class="form-error" id="renameError" role="alert"></p>
+      </div>
+      <footer class="dialog-actions">
+        <button class="button button-ghost" type="button" data-close-dialog>Batal</button>
+        <button class="button button-primary" type="submit">Simpan</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog class="dialog dialog-sheet" id="manualDialog" aria-labelledby="manualTitle">
+    <form class="dialog-panel" id="manualForm" novalidate>
+      <header class="dialog-head">
+        <div>
+          <p class="eyebrow">Input manual</p>
+          <h2 id="manualTitle">Nilai lain</h2>
+        </div>
+        <button class="icon-button dialog-close" type="button" data-close-dialog aria-label="Tutup input manual">
+          <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+        </button>
+      </header>
+      <div class="dialog-body">
+        <div class="manual-player" id="manualPlayer">
+          <span class="manual-dot" id="manualPlayerDot" aria-hidden="true"></span>
+          <span class="manual-for">Untuk <strong id="manualPlayerName">—</strong></span>
+          <span class="manual-total" id="manualPlayerTotal">0</span>
+        </div>
+        <label class="field">
+          <span class="field-label">Nilai</span>
+          <input class="manual-input" id="manualInput" name="amount" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="0" aria-describedby="manualHint manualError">
+        </label>
+        <p class="field-note" id="manualHint">Masukkan angka tanpa tanda. Lalu pilih Tambah atau Kurang.</p>
+        <p class="form-error" id="manualError" role="alert"></p>
+      </div>
+      <footer class="dialog-actions manual-actions">
+        <button class="button button-ghost manual-cancel" type="button" data-close-dialog>Batal</button>
+        <button class="button button-minus" type="button" id="manualSubtract">− Kurang</button>
+        <button class="button button-primary" type="button" id="manualAdd">+ Tambah</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog class="dialog dialog-confirm" id="confirmDialog" role="alertdialog" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+    <div class="dialog-panel">
+      <header class="dialog-head">
+        <div>
+          <p class="eyebrow" id="confirmEyebrow">Konfirmasi</p>
+          <h2 id="confirmTitle">Yakin?</h2>
+        </div>
+        <button class="icon-button dialog-close" type="button" id="confirmClose" aria-label="Tutup konfirmasi">
+          <svg class="icon" aria-hidden="true"><use href="#i-close"></use></svg>
+        </button>
+      </header>
+      <div class="dialog-body">
+        <p class="confirm-message" id="confirmMessage"></p>
+      </div>
+      <footer class="dialog-actions">
+        <button class="button button-ghost" type="button" id="confirmCancel">Batal</button>
+        <button class="button button-danger" type="button" id="confirmAccept">Ya, lanjutkan</button>
+      </footer>
+    </div>
+  </dialog>
+
+  <script src="core.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

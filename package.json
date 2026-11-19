@@ -1,0 +1,10 @@
+{
+  "name": "papan-skor-remi-rt",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Papan skor kartu remi 4 pemain dengan aturan bom otomatis.",
+  "scripts": {
+    "test": "node --test",
+    "start": "python3 -m http.server 4173"
+  }
+}
